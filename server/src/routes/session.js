@@ -185,6 +185,7 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
             res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
         }
     }
+
     const s = sessionManagers.get(sid);
     // console.log('session.js 파라미터 >> sid : '+sid);
 
@@ -192,53 +193,113 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
         res.redirect('/');
         return;
     }
-    let user_id = req.session.user_id;
-    // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
-    // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");
-
-    // let _user_POT = await fn_selectDataById(user_id);
-    var _user_POT = getUserPot(user_id);
-    console.log("######################## _user_POT : "+_user_POT +"########################");
     // Gsession = req.session;//2021-01-18
     const playerId = getOrSetPlayerIdCookie(req, res);
     // console.log('session.js 파라미터 >> getOrSetPlayerIdCookie : '+playerId);
     const token = jwt.sign({playerId: playerId}, process.env.PKR_JWT_SECRET, {expiresIn: "2 days"});
-    res.render('pages/game', 
-        // get_user_info_json(user_id,sid,token)  //,Gsession
-        {sid: sid
-        ,token: token
-        //2021-01-03 add 
-        ,user_id:req.session.user_id
-        ,user_name:req.session.user_name
-        ,user_nick:req.session.user_nick
-        ,user_avata:req.session.user_avata
-        ,user_level:req.session.user_level
-        ,user_CTP:req.session.user_CTP
-        ,user_CTP_address:req.session.user_CTP_address
-        // ,user_POT:req.session.user_POT
-        ,user_POT:_user_POT
-        // ,Gsession:req.session //req.session //2021-01-18
-        }
-    );
-}));
 
-function getUserPot(id){
-    var _pot;
+    let user_id = req.session.user_id;
+    // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
+    // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");
+    // let _user_POT = await fn_selectDataById(user_id);
+    // var _user_POT = getUserPot(user_id);
+    //#region  #################################
+    var _user_pot="";
+    // getUserPot(user_id,res);
     var conn = db_config.init();
     db_config.connect(conn);
-    var sql = "SELECT * FROM users WHERE id='"+id+"'";
+    var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
     conn.query(sql, function (err, rows, fields) 
     {
-        if(err){ console.log('query is not excuted. select fail...\n' + err);}
+        if(err){ 
+            // console.log('query is not excuted. select fail...\n' + err);
+            res.render('pages/game', 
+            // get_user_info_json(user_id,sid,token)  //,Gsession
+            {sid: sid
+            ,token: token
+            //2021-01-03 add 
+            ,user_id:req.session.user_id
+            ,user_name:req.session.user_name
+            ,user_nick:req.session.user_nick
+            ,user_avata:req.session.user_avata
+            ,user_level:req.session.user_level
+            ,user_CTP:req.session.user_CTP
+            ,user_CTP_address:req.session.user_CTP_address
+            ,user_POT:req.session.POT
+            // ,user_POT:_user_POT
+            // ,Gsession:req.session //req.session //2021-01-18
+            }
+            );
+        }
         else {
             if(rows.length>0){
-                _pot = rows[0].POT;
+                // res.cookie('POT', rows[0].POT, { maxAge: 10000   /*10 000밀리초 → 10초 → 10s*/ });
+                // req.session.user_POT = rows[0].POT;
+                // console.log(sql +" :sql // rows[0].POT : " + rows[0].POT);
+                // req.session.save();
+                res.render('pages/game', 
+                // get_user_info_json(user_id,sid,token)  //,Gsession
+                {   sid: sid
+                    ,token: token
+                    //2021-01-03 add 
+                    ,user_id:req.session.user_id
+                    ,user_name:req.session.user_name
+                    ,user_nick:req.session.user_nick
+                    ,user_avata:req.session.user_avata
+                    ,user_level:req.session.user_level
+                    ,user_CTP:req.session.user_CTP
+                    ,user_CTP_address:req.session.user_CTP_address
+                    ,user_POT:rows[0].POT
+                    // ,user_POT:_user_POT
+                    // ,Gsession:req.session //req.session //2021-01-18
+                }
+                );                
             }
         }
     });
-    console.log("_pot : " + _pot);
-    return _pot;
-}
+
+    // console.log("######################## req.session.user_POT : "+req.session.user_POT +" ######################## 193");
+    //#endregion  #################################
+
+    // res.render('pages/game', 
+    //     // get_user_info_json(user_id,sid,token)  //,Gsession
+    //     {sid: sid
+    //     ,token: token
+    //     //2021-01-03 add 
+    //     ,user_id:req.session.user_id
+    //     ,user_name:req.session.user_name
+    //     ,user_nick:req.session.user_nick
+    //     ,user_avata:req.session.user_avata
+    //     ,user_level:req.session.user_level
+    //     ,user_CTP:req.session.user_CTP
+    //     ,user_CTP_address:req.session.user_CTP_address
+    //     ,user_POT:_user_pot
+    //     // ,user_POT:_user_POT
+    //     // ,Gsession:req.session //req.session //2021-01-18
+    //     }
+    // );
+}));
+
+// function getUserPot(id,res){
+//     var _pot;
+//     var conn = db_config.init();
+//     db_config.connect(conn);
+//     var sql = "SELECT * FROM users WHERE id='"+id+"'";
+//     conn.query(sql, function (err, rows, fields) 
+//     {
+//         if(err){ console.log('query is not excuted. select fail...\n' + err);}
+//         else {
+//             if(rows.length>0){
+//                 res.cookie('POT', rows[0].POT, { maxAge: 10000   /*10 000밀리초 → 10초 → 10s*/ });
+//                 // req.session.user_POT = rows[0].POT;
+//                 console.log(sql +" :sql // rows[0].POT : " + rows[0].POT);
+//                 // req.session.save();
+//             }
+//         }
+//     });
+//     // console.log(sql +" :sql // _pot : " + _pot);
+//     // return _pot;
+// }
 
 // async function getUsrPot(_user_id, callback){
 //     var conn = db_config.init();
