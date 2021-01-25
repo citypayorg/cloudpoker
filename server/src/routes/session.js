@@ -41,6 +41,31 @@ const {addPlayerToRedis} = require("../redisHelpers");
 const {initializeGameRedis} = require("../redisHelpers");
 const {getOrSetPlayerIdCookie} = require("../persistent");
 // const jsonpatch = require('fast-json-patch');
+//###################################################
+// //fail error : wait is only valid in async function
+// const mysql2 = require('mysql2/promise'); // 2021-01-25
+// const dbClient = mysql2.createPool(db_config.constr());
+// async function fn_selectDataById(id){
+//     const conn = await dbClient.getConnection();
+//     try{
+//     const [rows, fields] = await conn.query(
+//         "SELECT * FROM users WHERE id = ?",
+//         [id]
+//     );
+//     if(rows.length > 0){
+//         console.log("db/" + id + "/hit");
+//     }else{
+//         console.log("db/" + id + "/miss");
+//     }
+//     //console.log(rows[0]);
+//     return rows[0];
+//     }catch(err){
+//         throw new Error(err);
+//     }finally{
+//         conn.release();
+//     }
+// };
+//###################################################
 
 const validateTableName = (val) => {
     if (!val || val.length === 0) return val;
@@ -63,7 +88,6 @@ const validateTableName = (val) => {
         throw new Error(`table name ${val} is already taken`);
 }
 var Gsession;
-
 // Information host submits for game (name, stack, bb, sb)
 router.route('/').post(asyncErrorHandler(async (req, res) => {
     //scheme to ensure valid username
@@ -140,10 +164,156 @@ router.route('/').post(asyncErrorHandler(async (req, res) => {
     console.log(`starting new table with id: ${value.tableName} with mod player id ${playerId}`);
 }));
 
+router.route('/:id').get(asyncErrorHandler((req, res) => {
+    let sid = req.params.id;
+    // console.log('session.js sid : '+sid);
+    // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
+    
+    if (req.session.user_id=="" || req.session.user_id === undefined ){
+        res.cookie('pre_sid', sid, { maxAge: 180000   /*180 000밀리초 → 180초 → 3Minute*/ });        
+        res.sendFile(STATIC_PATH + '/ulogin.html');
+        return;
+    }
+    //shared link로 들어왔다면 로그인 후 최초 링크 주소로 보내기 위하여 2021-01-19
+    else {
+        if(req.cookies.pre_sid=="" || req.cookies.pre_sid===undefined){
+        }else{
+            sid = req.cookies.pre_sid;
+            // console.log('################ cookies sid : '+sid+' ################');
+            res.cookie('pre_sid', ""); // diff url 
+            // res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
+            res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
+        }
+    }
+    const s = sessionManagers.get(sid);
+    // console.log('session.js 파라미터 >> sid : '+sid);
+
+    if (!s) { // redirect user to login page if the request's table ID does not exist
+        res.redirect('/');
+        return;
+    }
+    let user_id = req.session.user_id;
+    // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
+    // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");
+
+    // let _user_POT = await fn_selectDataById(user_id);
+    var _user_POT = getUserPot(user_id);
+    console.log("######################## _user_POT : "+_user_POT +"########################");
+    // Gsession = req.session;//2021-01-18
+    const playerId = getOrSetPlayerIdCookie(req, res);
+    // console.log('session.js 파라미터 >> getOrSetPlayerIdCookie : '+playerId);
+    const token = jwt.sign({playerId: playerId}, process.env.PKR_JWT_SECRET, {expiresIn: "2 days"});
+    res.render('pages/game', 
+        // get_user_info_json(user_id,sid,token)  //,Gsession
+        {sid: sid
+        ,token: token
+        //2021-01-03 add 
+        ,user_id:req.session.user_id
+        ,user_name:req.session.user_name
+        ,user_nick:req.session.user_nick
+        ,user_avata:req.session.user_avata
+        ,user_level:req.session.user_level
+        ,user_CTP:req.session.user_CTP
+        ,user_CTP_address:req.session.user_CTP_address
+        // ,user_POT:req.session.user_POT
+        ,user_POT:_user_POT
+        // ,Gsession:req.session //req.session //2021-01-18
+        }
+    );
+}));
+
+function getUserPot(id){
+    var _pot;
+    var conn = db_config.init();
+    db_config.connect(conn);
+    var sql = "SELECT * FROM users WHERE id='"+id+"'";
+    conn.query(sql, function (err, rows, fields) 
+    {
+        if(err){ console.log('query is not excuted. select fail...\n' + err);}
+        else {
+            if(rows.length>0){
+                _pot = rows[0].POT;
+            }
+        }
+    });
+    console.log("_pot : " + _pot);
+    return _pot;
+}
+
+// async function getUsrPot(_user_id, callback){
+//     var conn = db_config.init();
+//     db_config.connect(conn);
+//     var sql = "SELECT * FROM users WHERE id='"+_user_id+"' "; 
+//     let _user_POT=0;
+//     conn.query(sql, function(err, rows){
+//       if (err){ throw err;}
+//       if(rows.length>0){ _user_POT    = rows[0].POT;}
+//       console.log("################### getUsrPot : "+_user_POT+" ###################");
+//       return callback(_user_POT);
+//     });
+//   }
+
+
+// function query_promise(q_string){
+//     var conn = db_config.init();
+//     db_config.connect(conn);
+//     return new Promise((resolve, reject)=>{
+//         conn.query(q_string,(err, result)=>{
+//         if(err) return reject(err);
+//         resolve(result);
+//     });
+//  });
+// }
+
+// function get_user_info_json(user_id,sid,token) {  //,Gsession
+//     var user_name         = ""; // user email
+//     var user_nick         = ""; // user 닉네임
+//     var user_avata        = ""; // user 아바타 Default N
+//     var user_level        = 0; // 접속한 후 _levelUpTime 분당 + 1
+//     var user_CTP          = "0"; // CTP valance
+//     var user_CTP_address  = ""; // CTP 입금 주소
+//     var user_POT          = "0"; // CTP * 100
+//     var conn = db_config.init();//2020-09-13
+//     db_config.connect(conn);
+//     var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
+//     conn.query(sql, function (err, rows, fields) 
+//     {
+//       if(err){ console.log('query is not excuted. select fail...\n' + err);}
+//       else {
+//         if(rows.length>0){
+//           user_id     = rows[0].id;
+//           user_name   = rows[0].username;
+//           user_nick   = rows[0].nick;
+//           user_avata  = rows[0].avata;
+//           user_level  = rows[0].user_level;
+//           user_CTP    = rows[0].CTP;
+//           user_CTP    = parseFloat(user_CTP).toFixed(2);
+//           user_POT    = rows[0].POT;
+//           user_CTP_address= rows[0].CTP_address;
+//         //   console.log(user_POT +" : user_POT session 219 ############## 3pages/game ############## ");
+//         }
+//       }
+//     });
+  
+//     var render_json = new Object();
+//     render_json.sid         = sid;
+//     render_json.token       = token;
+//     render_json.user_id     = user_id;
+//     render_json.user_name   = user_name;
+//     render_json.user_nick   = user_nick;
+//     render_json.user_avata  = user_avata;
+//     render_json.user_level  = user_level;
+//     render_json.user_CTP    = user_CTP;
+//     render_json.user_CTP_address  = user_CTP_address;
+//     render_json.user_POT    = user_POT;
+//     // render_json.Gsession    = Gsession;
+//     console.log(" ##############"+ render_json.user_POT +" : render_json.user_POT session 235 ##############  ");
+//     return render_json;
+//   }
+
 // maps sid -> SessionManager
 // TODO: delete sid from sessionManagers when table finishes
 const sessionManagers = new Map();
-
 (async ()=>{
     let sids = await getSids();
     console.log('restarting tables with sids:', sids);
@@ -635,57 +805,6 @@ class SessionManager extends TableManager {
         }
     }
 }
-
-router.route('/:id').get(asyncErrorHandler((req, res) => {
-    let sid = req.params.id;
-    // console.log('session.js sid : '+sid);
-    // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
-    
-    if (req.session.user_id=="" || req.session.user_id === undefined ){
-        res.cookie('pre_sid', sid, { maxAge: 180000   /*180 000밀리초 → 180초 → 3Minute*/ });        
-        res.sendFile(STATIC_PATH + '/ulogin.html');
-        return;
-    }
-    //shared link로 들어왔다면 로그인 후 최초 링크 주소로 보내기 위하여 2021-01-19
-    else {
-        if(req.cookies.pre_sid=="" || req.cookies.pre_sid===undefined){
-        }else{
-            sid = req.cookies.pre_sid;
-            // console.log('################ cookies sid : '+sid+' ################');
-            res.cookie('pre_sid', ""); // diff url 
-            // res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
-            res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
-        }
-    }
-
-    const s = sessionManagers.get(sid);
-    // console.log('session.js 파라미터 >> sid : '+sid);
-
-    if (!s) { // redirect user to login page if the request's table ID does not exist
-        res.redirect('/');
-        return;
-    }
-    Gsession = req.session;//2021-01-18
-    const playerId = getOrSetPlayerIdCookie(req, res);
-    // console.log('session.js 파라미터 >> getOrSetPlayerIdCookie : '+playerId);
-    const token = jwt.sign({playerId: playerId},
-        process.env.PKR_JWT_SECRET, {expiresIn: "2 days"});
-    res.render('pages/game', {
-        sid: sid,
-        token: token
-        //2021-01-03 add 
-        ,user_id:req.session.user_id
-        ,user_name:req.session.user_name
-        ,user_nick:req.session.user_nick
-        ,user_avata:req.session.user_avata
-        ,user_level:req.session.user_level
-        ,user_CTP:req.session.user_CTP
-        ,user_CTP_address:req.session.user_CTP_address
-        ,user_POT:req.session.user_POT
-        ,Gsession:req.session //req.session //2021-01-18
-    });
-}));
-
 
 function makeAuthHandler(s) {
     return async function (socket) {

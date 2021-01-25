@@ -42,10 +42,7 @@ app.use('/sharedjs', express.static(__dirname + '/sharedjs'));
 // app.use(loginRouter);
 // #############################################
 
-
-
 //#region ######### 2021-01-01 mod user login start #########
-
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 //node ./server/src/index.js
@@ -114,31 +111,49 @@ app.get('/', function(req, res) {
         res.sendFile(STATIC_PATH + '/ulogin.html')
         return;
     }
-    // else{
-    //     // res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
-    //     // res.end(indexPage(user_id,user_nick,user_avata,user_level)); 
-    //     // Login page for host
-    //     // res.render('pages/login');
-    //     res.render('pages/login', get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT));
-    // }
+    else{
+      res.render('pages/login', get_user_info_json(user_id));
+    }
 });
-function get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT) {
-    var render_json = new Object();
-    render_json.title       = "title";
-    render_json.user_id     = user_id;
-    render_json.user_name   = user_name;
-    render_json.user_nick   = user_nick;
-    render_json.user_avata  = user_avata;
-    render_json.user_level  = user_level;
-    render_json.user_CTP    = user_CTP;
-    render_json.user_CTP_address  = user_CTP_address;
-    render_json.user_POT    = user_POT;
-    return render_json;
+
+function get_user_info_json(user_id) {
+  var conn = db_config.init();//2020-09-13
+  db_config.connect(conn);
+  var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
+  conn.query(sql, function (err, rows, fields) 
+  {
+    if(err){ console.log('query is not excuted. select fail...\n' + err);}
+    else {
+      if(rows.length>0){
+        user_id     = rows[0].id;
+        user_name   = rows[0].username;
+        user_nick   = rows[0].nick;
+        user_avata  = rows[0].avata;
+        user_level  = rows[0].user_level;
+        user_CTP    = rows[0].CTP;
+        user_CTP    = parseFloat(user_CTP).toFixed(2);
+        user_POT    = rows[0].POT; // 2020-01-04 DB change
+        user_CTP_address= rows[0].CTP_address;
+      }
+    }
+  });
+
+  var render_json = new Object();
+  render_json.title       = "title";
+  render_json.user_id     = user_id;
+  render_json.user_name   = user_name;
+  render_json.user_nick   = user_nick;
+  render_json.user_avata  = user_avata;
+  render_json.user_level  = user_level;
+  render_json.user_CTP    = user_CTP;
+  render_json.user_CTP_address  = user_CTP_address;
+  render_json.user_POT    = user_POT;
+  return render_json;
 }
 // #############################################
 
 app.post('/', function(req, res) {
-  res.render('pages/login', get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT));
+  res.render('pages/login', get_user_info_json(user_id));
 });
 
 

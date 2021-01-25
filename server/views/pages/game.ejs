@@ -4,7 +4,7 @@
 <head>
     <%- include('../partials/head'); %>
     <script>
-        const SESSION_ID = '<%=sid%>';
+        const SESSION_ID        = '<%=sid%>';
         localStorage.setItem('token', '<%=token%>');
         let _user_id            =  '<%=user_id%>';
         let _user_name          =  '<%=user_name%>';
@@ -13,7 +13,7 @@
         let _user_level         =  '<%=user_level%>';
         let _user_CTP           =  '<%=user_CTP%>';
         let _user_CTP_address   =  '<%=user_CTP_address%>';
-        var _user_POT           =  '<%=Gsession.user_POT%>';
+        var _user_POT           =  '<%=user_POT%>';
     </script>
 </head>
 
