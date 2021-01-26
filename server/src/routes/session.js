@@ -170,7 +170,7 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
     // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
     
     if (req.session.user_id=="" || req.session.user_id === undefined ){
-        res.cookie('pre_sid', sid, { maxAge: 180000   /*180 000밀리초 → 180초 → 3Minute*/ });        
+        res.cookie('pre_sid', sid, { maxAge: 60000   /*60 000밀리초 → 60초 → login 1Minute*/ });        
         res.sendFile(STATIC_PATH + '/ulogin.html');
         return;
     }
@@ -766,9 +766,9 @@ class SessionManager extends TableManager {
                     if(err){ console.log(err);} 
                     else { 
                         console.log(sql2+' ok ');
-                        Gsession.user_POT = winnerData.chips;
-                        Gsession.save();
-                        console.log('session.user_POT save 1');
+                        // Gsession.user_POT = winnerData.chips;
+                        // Gsession.save();
+                        // console.log('session.user_POT save 1');
                     }
                 });
                 await sleep(100);
@@ -787,9 +787,9 @@ class SessionManager extends TableManager {
                         if(err){ console.log(err);} 
                         else { 
                             console.log(sql2+' ok ');
-                            Gsession.user_POT = p.chips;
-                            Gsession.save();
-                            console.log('session.user_POT save 2');
+                            // Gsession.user_POT = p.chips;
+                            // Gsession.save();
+                            // console.log('session.user_POT save 2');
                         }
                     });
                     await sleep(100);
