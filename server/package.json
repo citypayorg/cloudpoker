@@ -31,6 +31,7 @@
     "shortid": "^2.2.15",
     "socket.io": "^2.3.0",
     "socketio-jwt": "^4.5.0",
+    "sync-mysql": "^3.0.1",
     "uuid": "^8.0.0",
     "xss": "^1.0.6"
   },

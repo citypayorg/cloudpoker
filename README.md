@@ -294,3 +294,9 @@ CREATE TABLE `board` (
   `hit` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`idx`)
 );
+
+
+-- sync-mysql 모듈을 설치 2021-01-28
+cd server
+npm install sync-mysql
+
