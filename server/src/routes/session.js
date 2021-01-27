@@ -14,32 +14,32 @@ var session = require('express-session');  // 2020-01-02 session
 var MySQLStore = require('express-mysql-session')(session);  // 2020-01-02 session 
 var sessionStore = new MySQLStore(db_config.constr());   // 2020-01-02 session 
 router.use(session({
-  secret:"ctpSessionk@y",
-  resave:false,
-  saveUninitialized:true,
-  store: sessionStore
+    secret: "ctpSessionk@y",
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore
 }));   // 2020-01-02 session 
 //#endregion
 const Joi = require('@hapi/joi');
 const shortid = require('shortid');
-const {TableManager} = require('../server-logic');
-const {asyncErrorHandler, sleep, asyncSchemaValidator, formatJoiError} = require('../funcs');
+const { TableManager } = require('../server-logic');
+const { asyncErrorHandler, sleep, asyncSchemaValidator, formatJoiError } = require('../funcs');
 const poker = require('../poker-logic/lib/node-poker');
-const socketioJwt   = require('socketio-jwt');
+const socketioJwt = require('socketio-jwt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const {getGameLog} = require("../redisHelpers");
-const {addToGameLog} = require("../redisHelpers");
-const {initializeTableRedis} = require("../redisHelpers");
-const {deleteTableOnRedis} = require("../redisHelpers");
-const {sio} = require('../sio');
-const {getPlayerIdsForTable} = require("../redisHelpers");
-const {getTableState} = require("../redisHelpers");
-const {getSids} = require("../redisHelpers");
-const {deletePlayerOnRedis} = require("../redisHelpers");
-const {addPlayerToRedis} = require("../redisHelpers");
-const {initializeGameRedis} = require("../redisHelpers");
-const {getOrSetPlayerIdCookie} = require("../persistent");
+const { getGameLog } = require("../redisHelpers");
+const { addToGameLog } = require("../redisHelpers");
+const { initializeTableRedis } = require("../redisHelpers");
+const { deleteTableOnRedis } = require("../redisHelpers");
+const { sio } = require('../sio');
+const { getPlayerIdsForTable } = require("../redisHelpers");
+const { getTableState } = require("../redisHelpers");
+const { getSids } = require("../redisHelpers");
+const { deletePlayerOnRedis } = require("../redisHelpers");
+const { addPlayerToRedis } = require("../redisHelpers");
+const { initializeGameRedis } = require("../redisHelpers");
+const { getOrSetPlayerIdCookie } = require("../persistent");
 // const jsonpatch = require('fast-json-patch');
 //###################################################
 // //fail error : wait is only valid in async function
@@ -72,10 +72,10 @@ const validateTableName = (val) => {
     val = val.replace(/\s/g, '-'); // replace spaces with hyphens
     val = val.replace(/\'/g, ''); // removes quote
     let counter = 0;
-    while (sessionManagers.has(val) && counter < 1000){
+    while (sessionManagers.has(val) && counter < 1000) {
         console.log(val);
         counter++;
-        if (counter > 1){
+        if (counter > 1) {
             val = val.replace(/\d+$/, counter);
         } else {
             val += '-' + counter;
@@ -87,7 +87,7 @@ const validateTableName = (val) => {
     else
         throw new Error(`table name ${val} is already taken`);
 }
-var Gsession;
+// var Gsession;
 // Information host submits for game (name, stack, bb, sb)
 router.route('/').post(asyncErrorHandler(async (req, res) => {
     //scheme to ensure valid username
@@ -151,12 +151,12 @@ router.route('/').post(asyncErrorHandler(async (req, res) => {
 
     var sql3 = "";  // sql3 -- board list 
     sql3 = sql3 + " INSERT INTO `board` (`name`,`title`,`content`,`passwd`,`hit`)";
-    sql3 = sql3 + " VALUES ('"+value.tableName+"','"+value.tableName+"','OPEN LIST','wow1',0); ";
+    sql3 = sql3 + " VALUES ('" + value.tableName + "','" + value.tableName + "','OPEN LIST','wow1',0); ";
     var params = [];
-    conn.query(sql3, params, function(err, rows2, fields2){
-        if(err){ console.log(err);} 
-        else { 
-            console.log(sql3+' ok ');
+    conn.query(sql3, params, function (err, rows2, fields2) {
+        if (err) { console.log(err); }
+        else {
+            console.log(sql3 + ' ok ');
         }
     });
     await sleep(100);
@@ -168,9 +168,9 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
     var sid = req.params.id;
     // console.log('session.js sid : '+sid);
     // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
-    
-    if (req.session.user_id=="" || req.session.user_id === undefined ){
-        // res.cookie('pre_sid', sid, { maxAge: 60000   /*60 000밀리초 → 60초 → login 1Minute*/ });        
+
+    if (req.session.user_id == "" || req.session.user_id === undefined) {
+        res.cookie('pre_sid', sid, { maxAge: 180000   /*180 000밀리초 → 180초 → login 3Minute*/ });
         res.sendFile(STATIC_PATH + '/ulogin.html');
         return;
     }
@@ -196,7 +196,7 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
     // Gsession = req.session;//2021-01-18
     const playerId = getOrSetPlayerIdCookie(req, res);
     // console.log('session.js 파라미터 >> getOrSetPlayerIdCookie : '+playerId);
-    const token = jwt.sign({playerId: playerId}, process.env.PKR_JWT_SECRET, {expiresIn: "2 days"});
+    const token = jwt.sign({ playerId: playerId }, process.env.PKR_JWT_SECRET, { expiresIn: "2 days" });
 
     let user_id = req.session.user_id;
     // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
@@ -204,56 +204,57 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
     // let _user_POT = await fn_selectDataById(user_id);
     // var _user_POT = getUserPot(user_id);
     //#region  #################################
-    var _user_pot="";
+    var _user_pot = "";
     // getUserPot(user_id,res);
     var conn = db_config.init();
     db_config.connect(conn);
-    var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
-    conn.query(sql, function (err, rows, fields) 
-    {
-        if(err){ 
+    var sql = "SELECT * FROM users WHERE id='" + user_id + "'";
+    conn.query(sql, function (err, rows, fields) {
+        if (err) {
             // console.log('query is not excuted. select fail...\n' + err);
-            res.render('pages/game', 
-            // get_user_info_json(user_id,sid,token)  //,Gsession
-            {sid: sid
-            ,token: token
-            //2021-01-03 add 
-            ,user_id:req.session.user_id
-            ,user_name:req.session.user_name
-            ,user_nick:req.session.user_nick
-            ,user_avata:req.session.user_avata
-            ,user_level:req.session.user_level
-            ,user_CTP:req.session.user_CTP
-            ,user_CTP_address:req.session.user_CTP_address
-            ,user_POT:req.session.POT
-            // ,user_POT:_user_POT
-            // ,Gsession:req.session //req.session //2021-01-18
-            }
+            res.render('pages/game',
+                // get_user_info_json(user_id,sid,token)  //,Gsession
+                {
+                    sid: sid
+                    , token: token
+                    //2021-01-03 add 
+                    , user_id: req.session.user_id
+                    , user_name: req.session.user_name
+                    , user_nick: req.session.user_nick
+                    , user_avata: req.session.user_avata
+                    , user_level: req.session.user_level
+                    , user_CTP: req.session.user_CTP
+                    , user_CTP_address: req.session.user_CTP_address
+                    , user_POT: req.session.POT
+                    // ,user_POT:_user_POT
+                    // ,Gsession:req.session //req.session //2021-01-18
+                }
             );
         }
         else {
-            if(rows.length>0){
+            if (rows.length > 0) {
                 // res.cookie('POT', rows[0].POT, { maxAge: 10000   /*10 000밀리초 → 10초 → 10s*/ });
                 // req.session.user_POT = rows[0].POT;
                 // console.log(sql +" :sql // rows[0].POT : " + rows[0].POT);
                 // req.session.save();
-                res.render('pages/game', 
-                // get_user_info_json(user_id,sid,token)  //,Gsession
-                {   sid: sid
-                    ,token: token
-                    //2021-01-03 add 
-                    ,user_id:req.session.user_id
-                    ,user_name:req.session.user_name
-                    ,user_nick:req.session.user_nick
-                    ,user_avata:req.session.user_avata
-                    ,user_level:req.session.user_level
-                    ,user_CTP:req.session.user_CTP
-                    ,user_CTP_address:req.session.user_CTP_address
-                    ,user_POT:rows[0].POT
-                    // ,user_POT:_user_POT
-                    // ,Gsession:req.session //req.session //2021-01-18
-                }
-                );                
+                res.render('pages/game',
+                    // get_user_info_json(user_id,sid,token)  //,Gsession
+                    {
+                        sid: sid
+                        , token: token
+                        //2021-01-03 add 
+                        , user_id: req.session.user_id
+                        , user_name: req.session.user_name
+                        , user_nick: req.session.user_nick
+                        , user_avata: req.session.user_avata
+                        , user_level: req.session.user_level
+                        , user_CTP: req.session.user_CTP
+                        , user_CTP_address: req.session.user_CTP_address
+                        , user_POT: rows[0].POT
+                        // ,user_POT:_user_POT
+                        // ,Gsession:req.session //req.session //2021-01-18
+                    }
+                );
             }
         }
     });
@@ -355,7 +356,7 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 //         }
 //       }
 //     });
-  
+
 //     var render_json = new Object();
 //     render_json.sid         = sid;
 //     render_json.token       = token;
@@ -375,14 +376,14 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 // maps sid -> SessionManager
 // TODO: delete sid from sessionManagers when table finishes
 const sessionManagers = new Map();
-(async ()=>{
+(async () => {
     let sids = await getSids();
     console.log('restarting tables with sids:', sids);
     for (let sid of sids) {
-        let {table, prev_round} = await getTableState(sid);
+        let { table, prev_round } = await getTableState(sid);
         const pids = await getPlayerIdsForTable(sid);
         const tableNamespace = sio.of('/' + sid);
-        let modIds = table.allPlayers.filter(p=>p!==null&&p.isMod).map(p=>pids[p.playerName].playerid);
+        let modIds = table.allPlayers.filter(p => p !== null && p.isMod).map(p => pids[p.playerName].playerid);
         const manager = new SessionManager(tableNamespace, sid, table, null, null, null, null, null, pids, modIds);
         sessionManagers.set(sid, manager);
         if (table.game) {
@@ -462,13 +463,13 @@ class SessionManager extends TableManager {
         this.socketMap.set(playerId, socket);
     }
 
-    getSocket (playerId) {
+    getSocket(playerId) {
         return this.socketMap.get(playerId);
     };
 
-    getSocketId (playerId) {
+    getSocketId(playerId) {
         const socket = this.getSocket(playerId);
-        return socket? socket.id: undefined;
+        return socket ? socket.id : undefined;
     };
 
     getHandLog(gameIndex) {
@@ -482,11 +483,11 @@ class SessionManager extends TableManager {
     canPlayerJoin(playerId, playerName, stack, isStraddling) {
         if (super.isPlayerNameUsed(playerName)) {
             this.io.to(this.getSocketId(playerId)).emit('alert',
-                {'message': `Player name ${playerName} is already taken.`});
+                { 'message': `Player name ${playerName} is already taken.` });
             return false;
         } else if (playerName.toLowerCase().indexOf('guest') === 0) {
             this.io.to(this.getSocketId(playerId)).emit('alert',
-                {'message': `Player name cannot start with "guest"`});
+                { 'message': `Player name cannot start with "guest"` });
             return false;
         }
         return true;
@@ -530,7 +531,7 @@ class SessionManager extends TableManager {
             table: this.table.getPublicInfo(),
             gameInProgress: this.gameInProgress,
             raceInProgress: this.raceInProgress,
-            raceSchedule: this.raceSchedule? Object.assign({}, this.raceSchedule): null,
+            raceSchedule: this.raceSchedule ? Object.assign({}, this.raceSchedule) : null,
         };
     }
 
@@ -565,9 +566,9 @@ class SessionManager extends TableManager {
             playersCopy[p.seat] = p;
 
             table = Object.assign({}, table); // shallow copy
-            Object.assign(table, {allPlayers: playersCopy});
+            Object.assign(table, { allPlayers: playersCopy });
             publicInfo = Object.assign({}, publicInfo);
-            Object.assign(publicInfo, {table: table, player: p});
+            Object.assign(publicInfo, { table: table, player: p });
         }
 
         this.io.to(socketId).emit('state-snapshot', publicInfo);
@@ -626,7 +627,7 @@ class SessionManager extends TableManager {
                 playerName: playerName,
                 value: value,
                 tableSeedHash: sha256Hash(this.table.getSeed()),
-            },{
+            }, {
                 action: 'setSeed',
                 playerName: playerName,
                 playerSeedHash: sha256Hash(value),
@@ -665,7 +666,7 @@ class SessionManager extends TableManager {
     // horrible name. call playerLeaves. handlePlayerExit is basically a private method
     async playerLeaves(playerId) {
         let playerName = super.getPlayerById(playerId);
-        if (!this.gameInProgress || !this.getPlayer(playerName).inHand || this.hasPlayerFolded(playerName)){
+        if (!this.gameInProgress || !this.getPlayer(playerName).inHand || this.hasPlayerFolded(playerName)) {
             await this.handlePlayerExit(playerName);
         } else {
             let prev_round = super.getRoundName();
@@ -710,9 +711,9 @@ class SessionManager extends TableManager {
     async allInRace() {
         console.log("EVERYONE ALL IN BEFORE SHOWDOWN, TABLE THEM");
         this.raceInProgress = true;
-        this.raceSchedule = {'flop': 0, 'turn': 0, 'river': 0};
+        this.raceSchedule = { 'flop': 0, 'turn': 0, 'river': 0 };
         // TODO: a player doesn't have to show their cards if they were not the last person to raise
-        let playersShowingCards = this.table.players.filter(p=>p.allIn || !p.folded || p.showingCards);
+        let playersShowingCards = this.table.players.filter(p => p.allIn || !p.folded || p.showingCards);
         for (let p of playersShowingCards) {
             p.showHand();
         }
@@ -722,7 +723,7 @@ class SessionManager extends TableManager {
         const waitTime = 2000;
         let currentTime = Date.now();
         let sleepTime = 0;
-        while (super.getRoundName() !== 'showdown'){
+        while (super.getRoundName() !== 'showdown') {
             this.table.call();
             if (super.getRoundName() !== prevRound && super.getRoundName() !== 'showdown') {
                 prevRound = super.getRoundName();
@@ -742,12 +743,12 @@ class SessionManager extends TableManager {
         //...Object.entries(args || {}).flat() --> [].concat(...Object.entries(args || {}))
         // console.log('/server/src/routes/session.js 482 [addToGameLog] ');
         //await addToGameLog(this.sid, this.table.game? this.table.game.id: 'none', logEvent, ...Object.entries(args || {}).flat()); // org
-        await addToGameLog(this.sid, this.table.game? this.table.game.id: 'none', logEvent, [].concat(...Object.entries(args || {}))); // 1st
+        await addToGameLog(this.sid, this.table.game ? this.table.game.id : 'none', logEvent, [].concat(...Object.entries(args || {}))); // 1st
         //await addToGameLog(this.sid, this.table.game? this.table.game.id: 'none', logEvent, [].concat.apply([], ...Object.entries(args || {}))); // 2dn
         //await addToGameLog(this.sid, this.table.game? this.table.game.id: 'none', logEvent, JSON.stringify(...Object.entries(args || {})).flat()); // 3rd
     }
 
-    async check_round (prev_round) {
+    async check_round(prev_round) {
         // if at showdown or everyone folded
         if (this.table.game.winners.length > 0) {
             this.sendTableState();
@@ -760,12 +761,12 @@ class SessionManager extends TableManager {
                 // console.log('#### /server/src/routes/session.js 512 [check_round-winnerData] find winnerData - '+winnerData.playerName+' /amount:'+winnerData.amount+' /chips:'+winnerData.chips+' /seat:'+winnerData.seat);
                 //#region ################## MYSQL winner save ##################
                 winplayerName = winnerData.playerName;
-                var sql2 = " update users set POT="+winnerData.chips+" where id="+winnerData.playerName.replace('U','')+" ";
+                var sql2 = " update users set POT=" + winnerData.chips + " where id=" + winnerData.playerName.replace('U', '') + " ";
                 var params = [];
-                conn.query(sql2, params, function(err, rows2, fields2){
-                    if(err){ console.log(err);} 
-                    else { 
-                        console.log(sql2+' ok ');
+                conn.query(sql2, params, function (err, rows2, fields2) {
+                    if (err) { console.log(err); }
+                    else {
+                        console.log(sql2 + ' ok ');
                         // Gsession.user_POT = winnerData.chips;
                         // Gsession.save();
                         // console.log('session.user_POT save 1');
@@ -775,18 +776,18 @@ class SessionManager extends TableManager {
                 //#endregion################## MYSQL winner save ##################
             }
             await sleep(1000);
-            
+
             //#region ################## MYSQL loser save ##################
             for (let p of this.table.allPlayers) {
                 if (p === null) { continue; }
-                if(winplayerName!=p.playerName){ 
+                if (winplayerName != p.playerName) {
                     // console.log('#### session.js 528 - loserplayerName : '+p.playerName+' /chips:'+p.chips+' /seat:'+p.seat);
-                    var sql2 = " update users set POT="+p.chips+" where id="+p.playerName.replace('U','')+" ";
+                    var sql2 = " update users set POT=" + p.chips + " where id=" + p.playerName.replace('U', '') + " ";
                     var params = [];
-                    conn.query(sql2, params, function(err, rows2, fields2){
-                        if(err){ console.log(err);} 
-                        else { 
-                            console.log(sql2+' ok ');
+                    conn.query(sql2, params, function (err, rows2, fields2) {
+                        if (err) { console.log(err); }
+                        else {
+                            console.log(sql2 + ' ok ');
                             // Gsession.user_POT = p.chips;
                             // Gsession.save();
                             // console.log('session.user_POT save 2');
@@ -800,8 +801,8 @@ class SessionManager extends TableManager {
 
             // handle losers
             let losers = super.getLosers();
-            for (let i = 0; i < losers.length; i++){
-                console.log('#### /server/src/routes/session.js 542 [check_round-losers] - '+losers[i].playerName+' /chips:'+losers[i].chips);
+            for (let i = 0; i < losers.length; i++) {
+                console.log('#### /server/src/routes/session.js 542 [check_round-losers] - ' + losers[i].playerName + ' /chips:' + losers[i].chips);
                 await this.handlePlayerExit(losers[i].playerName);
             }
             await sleep(800);
@@ -821,7 +822,7 @@ class SessionManager extends TableManager {
             await deletePlayerOnRedis(this.sid, p.playerName);
         }
     }
-    async startNextRoundOrWaitingForPlayers () {
+    async startNextRoundOrWaitingForPlayers() {
         await this.deleteLeavingPlayersRedis();
         // this.previousTableState = null;
         // this.handEndLog.push({time: Date.now(), finalState: this.getPublicInfo()});
@@ -931,7 +932,7 @@ async function handleOnAuth(s, socket) {
     });
     // chatroom features
     // send a message in the chatroom
-    socket.on('chat', asyncSchemaValidator(chatSchema,(data) => {
+    socket.on('chat', asyncSchemaValidator(chatSchema, (data) => {
         io.emit('chat', {
             handle: s.getPlayerChatName(playerId),
             message: data.message
@@ -943,21 +944,21 @@ async function handleOnAuth(s, socket) {
         socket.broadcast.emit('typing', s.getPlayerById(playerId));
     });
 
-    socket.on('get-game-log', async ({cursor}) => {
-        io.to(socket.id).emit('get-game-log', {cursor, log: await s.getGameLog(cursor)});
+    socket.on('get-game-log', async ({ cursor }) => {
+        io.to(socket.id).emit('get-game-log', { cursor, log: await s.getGameLog(cursor) });
     })
-    socket.on('get-hand-replay', ({gameIndex, display}) => {
+    socket.on('get-hand-replay', ({ gameIndex, display }) => {
         let handLog = s.getHandLog(gameIndex);
-        io.to(socket.id).emit('get-hand-replay', {handLog, gameIndex, display, validatePatch: process.env.NODE_ENV !== 'production'})
+        io.to(socket.id).emit('get-hand-replay', { handLog, gameIndex, display, validatePatch: process.env.NODE_ENV !== 'production' })
     });
 
     s.sendTableStateTo(socket.id, s.getPlayerById(playerId));
 
-    const isSeatedPlayerIdValidator = function(value) {
+    const isSeatedPlayerIdValidator = function (value) {
         if (!s.isSeatedPlayerId(playerId)) throw new Error('not a seated player\'s id');
         return value;
     }
-    const isModValidator = function(value) {
+    const isModValidator = function (value) {
         if (!s.isModPlayerId(playerId)) throw new Error('not a mod\'s player id');
         return value;
     }
@@ -978,7 +979,7 @@ async function handleOnAuth(s, socket) {
         if (!s.canPlayerJoin(playerId, data.playerName, data.stack, data.isStraddling === true)) {
             return;
         }
-        data.seed = data.seed && data.seed.length > 0? data.seed: v4();
+        data.seed = data.seed && data.seed.length > 0 ? data.seed : v4();
         // console.log('buy in seed is undefined', data.seed === undefined);
         await s.handleBuyIn(data.playerName, playerId, data.stack, data.isStraddling === true, data.seed);
     }));
@@ -1052,7 +1053,7 @@ async function handleOnAuth(s, socket) {
     const setSeedSchema = Joi.object({
         value: Joi.string().trim().min(1).max(51).external(xss).required()
     }).external(isSeatedPlayerIdValidator);
-    socket.on('setSeed', asyncSchemaValidator(setSeedSchema, async ({value}) => {
+    socket.on('setSeed', asyncSchemaValidator(setSeedSchema, async ({ value }) => {
         const playerName = s.getPlayerById(playerId);
         await s.setPlayerSeed(playerName, value);
     }));
@@ -1086,8 +1087,8 @@ async function handleOnAuth(s, socket) {
         bigBlind: Joi.number().min(0).required(),
     }).external(isModValidator);
     socket.on('update-blinds-next-round', asyncSchemaValidator(updateBlindsSchema, (data) => {
-        if (data && data.smallBlind && data.bigBlind){
-            if (data.smallBlind <= data.bigBlind){
+        if (data && data.smallBlind && data.bigBlind) {
+            if (data.smallBlind <= data.bigBlind) {
                 console.log('updating blinds next hand');
                 s.updateBlindsNextHand(data.smallBlind, data.bigBlind);
                 s.sendTableState();
@@ -1112,11 +1113,11 @@ async function handleOnAuth(s, socket) {
     }).external(isModValidator);
     socket.on('transfer-host', asyncSchemaValidator(transferHostSchema, (data) => {
         let newHostName = s.getPlayerBySeat(data.seat);
-        if (newHostName === s.getPlayerById(playerId)){
+        if (newHostName === s.getPlayerById(playerId)) {
             console.log('attempting to transfer host to oneself');
         } else {
             console.log('transferring host to ', newHostName);
-            if (!s.transferHost(newHostName)){
+            if (!s.transferHost(newHostName)) {
                 console.log('unable to transfer host');
             }
             s.sendTableState();
@@ -1130,11 +1131,11 @@ async function handleOnAuth(s, socket) {
     socket.on('update-player-stack', asyncSchemaValidator(updatePlayerStackSchema, (data) => {
         let pName = s.getPlayerBySeat(data.seat);
         let newStack = data.newStackAmount;
-        if (!pName || pName === 'guest'){
+        if (!pName || pName === 'guest') {
             console.log('player at seat ' + data.seat + ' doesnt exist');
         } else {
             console.log('/server/src/routes/session.js 876:update-player-stack');
-            if (!newStack || isNaN(newStack) || newStack <= 0){
+            if (!newStack || isNaN(newStack) || newStack <= 0) {
                 console.log('error with newStackAmountInput');
             } else {
                 console.log(`queuing to update ${pName}'s stack to ${newStack}`);

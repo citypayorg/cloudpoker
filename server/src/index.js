@@ -1,8 +1,9 @@
 const path = require('path');
-require('dotenv').config({path: path.join(__dirname, '../../.env')});
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // // if you ever want to do the https stuff through express (rather than nginx, or whatever) uncomment this
 // var https = require('https');
@@ -23,7 +24,7 @@ const server = http.createServer(app);
 // const server = https.createServer(options, app);
 
 //socket setup
-const {setSio} = require("./sio");
+const { setSio } = require("./sio");
 setSio(require('socket.io')(server));
 
 // initializeSocket(server);
@@ -86,159 +87,167 @@ var session = require('express-session');  // 2020-01-02 session
 var MySQLStore = require('express-mysql-session')(session);  // 2020-01-02 session 
 var sessionStore = new MySQLStore(db_config.constr());   // 2020-01-02 session 
 app.use(session({
-  secret:"ctpSessionk@y",
-  resave:false,
-  saveUninitialized:true,
+  secret: "ctpSessionk@y",
+  resave: false,
+  saveUninitialized: true,
   store: sessionStore
 }));   // 2020-01-02 session 
 
-var user_id           = ""; // user idx
-var user_name         = ""; // user email
-var user_nick         = ""; // user 닉네임
-var user_avata        = ""; // user 아바타 Default N
-var user_level        = 0; // 접속한 후 _levelUpTime 분당 + 1
-var user_ip           = "";
-var user_CTP          = "0"; // CTP valance
-var user_CTP_address  = ""; // CTP 입금 주소
-var user_POT          = "0"; // CTP * 100
+var user_id = ""; // user idx
+var user_name = ""; // user email
+var user_nick = ""; // user 닉네임
+var user_avata = ""; // user 아바타 Default N
+var user_level = 0; // 접속한 후 _levelUpTime 분당 + 1
+var user_ip = "";
+var user_CTP = "0"; // CTP valance
+var user_CTP_address = ""; // CTP 입금 주소
+var user_POT = "0"; // CTP * 100
 var md5 = require('md5');
 
 // #############################################
 app.use(express.static('public'));
 const STATIC_PATH = path.join(__dirname, '../public')
-app.get('/', function(req, res) {
-    if (req.session.user_id=="" || req.session.user_id === undefined ){
-        res.sendFile(STATIC_PATH + '/ulogin.html')
-        return;
-    }
-    else{
-      res.render('pages/login', get_user_info_json(user_id));
-    }
+app.get('/', function (req, res) {
+  if (req.session.user_id == "" || req.session.user_id === undefined) {
+    res.sendFile(STATIC_PATH + '/ulogin.html')
+    return;
+  }
+  else {
+    res.render('pages/login', get_user_info_json(user_id));
+  }
 });
 
 function get_user_info_json(user_id) {
   var conn = db_config.init();//2020-09-13
   db_config.connect(conn);
-  var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
-  conn.query(sql, function (err, rows, fields) 
-  {
-    if(err){ console.log('query is not excuted. select fail...\n' + err);}
+  var sql = "SELECT * FROM users WHERE id='" + user_id + "'";
+  conn.query(sql, function (err, rows, fields) {
+    if (err) { console.log('query is not excuted. select fail...\n' + err); }
     else {
-      if(rows.length>0){
-        user_id     = rows[0].id;
-        user_name   = rows[0].username;
-        user_nick   = rows[0].nick;
-        user_avata  = rows[0].avata;
-        user_level  = rows[0].user_level;
-        user_CTP    = rows[0].CTP;
-        user_CTP    = parseFloat(user_CTP).toFixed(2);
-        user_POT    = rows[0].POT; // 2020-01-04 DB change
-        user_CTP_address= rows[0].CTP_address;
+      if (rows.length > 0) {
+        user_id = rows[0].id;
+        user_name = rows[0].username;
+        user_nick = rows[0].nick;
+        user_avata = rows[0].avata;
+        user_level = rows[0].user_level;
+        user_CTP = rows[0].CTP;
+        user_CTP = parseFloat(user_CTP).toFixed(2);
+        user_POT = rows[0].POT; // 2020-01-04 DB change
+        user_CTP_address = rows[0].CTP_address;
       }
     }
   });
 
   var render_json = new Object();
-  render_json.title       = "title";
-  render_json.user_id     = user_id;
-  render_json.user_name   = user_name;
-  render_json.user_nick   = user_nick;
-  render_json.user_avata  = user_avata;
-  render_json.user_level  = user_level;
-  render_json.user_CTP    = user_CTP;
-  render_json.user_CTP_address  = user_CTP_address;
-  render_json.user_POT    = user_POT;
+  render_json.title = "title";
+  render_json.user_id = user_id;
+  render_json.user_name = user_name;
+  render_json.user_nick = user_nick;
+  render_json.user_avata = user_avata;
+  render_json.user_level = user_level;
+  render_json.user_CTP = user_CTP;
+  render_json.user_CTP_address = user_CTP_address;
+  render_json.user_POT = user_POT;
   return render_json;
 }
 // #############################################
 
-app.post('/', function(req, res) {
+app.post('/', function (req, res) {
   res.render('pages/login', get_user_info_json(user_id));
 });
 
 
 // // post 로 넘어 오면 !!! 게임
+app.use('/ulogin', cookieParser(process.env.COOKIE_SECRET));
 app.post('/ulogin', function (req, res) {
-    var md5 = require('md5');
-    var param_username = req.body.username;
-    var param_password = req.body.password;
-    console.log('요청 파라미터 >> username : '+param_username);
-    
-    var conn = db_config.init();//2020-09-13
-    db_config.connect(conn);
-    var sql = "SELECT a.* , (SELECT IFNULL(sum(minuteCnt),0) FROM tbl_game WHERE game_idx='3' and user_idx=a.id) as user_level FROM users a WHERE username ='"+param_username+"' and password ='"+md5(param_password)+"'";
-    // console.log(sql);
-    conn.query(sql, function (err, rows, fields) 
-    {
-      if(err){
-          console.log('query is not excuted. select fail...\n' + err);
-          res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
-          res.end("<h1>error. query is not excuted </h1>"); 
-          res.sendFile(STATIC_PATH + '/ulogin.html')
-      }
-      else {
-        //res.render('list.ejs', {list : rows});
-        //console.log( 'select ok - ' + sql);
-        //for(var i=0; i<rows.length; i++){ console.log(i+':i / '+rows[i].username +'-'+ rows[i].CTP_address +'-'+ rows[i].id +'-'+ rows[i].nick); }
-        if(rows.length>0){
-          user_id     = rows[0].id;
-          user_name   = rows[0].username;
-          user_nick   = rows[0].nick;
-          user_avata  = rows[0].avata;
-          user_level  = rows[0].user_level;
-          user_CTP    = rows[0].CTP;
-          user_CTP    = parseFloat(user_CTP).toFixed(2);
-          user_POT    = rows[0].POT; // 2020-01-04 DB change
-          user_CTP_address= rows[0].CTP_address;
-          console.log('유저CTP:'+user_CTP);
-          // console.log('유저레벨:'+user_level);
-          user_ip     = req.headers['x-forwarded-for'] ||req.connection.remoteAddress ||req.socket.remoteAddress ||req.connection.socket.remoteAddress;
+  var md5 = require('md5');
+  var param_username = req.body.username;
+  var param_password = req.body.password;
+  console.log('요청 파라미터 >> username : ' + param_username);
 
-          req.session.user_id    = user_id; // 2020-01-02 session 
-          req.session.user_name  = user_name; // 2020-01-02 session 
-          req.session.user_nick  = user_nick; // 2020-01-02 session 
-          req.session.user_avata = user_avata; // 2020-01-02 session 
-          req.session.user_level = user_level; // 2020-01-02 session 
-          req.session.user_CTP   = user_CTP; // 2020-01-02 session 
-          req.session.user_CTP_address = user_CTP_address; // 2020-01-02 session 
-          req.session.user_POT   = user_POT; // 2020-01-02 session 
-          
-          //   intervalLvUpFunc();
-          var sql2 = " "; 
-          sql2 = sql2 + " INSERT INTO `tbl_game`(`game_idx`, `user_idx`, `user_coin`, `coin_address`, `yyyymmdd`, `ip`) ";
-          sql2 = sql2 + " VALUES (3,?,'CTP',?,CURDATE()+0,?) ";
-          sql2 = sql2 + " ON DUPLICATE KEY UPDATE minuteCnt = minuteCnt + 1, last_time=now() "; //무조건 +1 되는 버그로 Merge 문 X 
-          var params = [rows[0].id, rows[0].CTP_address, user_ip];
-          conn.query(sql2, params, function(err, rows2, fields2){
-            if(err){
-              console.log(err);
-              //conn.release();
-            } else {
-              console.log('merge success !!!!');
-              // console.log(rows2);
-              //conn.release();
-            }
-          });
-          // login 성공
-        //   res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
-        //   res.end(indexPage(user_id,user_nick,user_avata,user_level)); 
-            //세션 스토어가 이루어진 후 redirect를 해야함.  // 2020-01-02 session 
-            req.session.save(function() {
-              // session saved
-              // console.log('session.save err :' + err);
-            });
-            res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
-            res.end("<html lang='en'><head><title>temp</title></head><body onload='document.frm.submit();'><form id='frm' name='frm' method='post' action='/'><input type='hidden' name='loginok' id='loginok' value='loginok'></form></body></html>");
-            // res.end("<script>document.location.href='/';</script>");
-            // res.render('pages/login', get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT));
-        }else{
-          res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
-          res.end("<script>alert('password maybe wrong');document.location.href='/';</script>"); 
-        //   res.sendFile(STATIC_PATH + '/ulogin.html')
+  var conn = db_config.init();//2020-09-13
+  db_config.connect(conn);
+  var sql = "SELECT a.* , (SELECT IFNULL(sum(minuteCnt),0) FROM tbl_game WHERE game_idx='3' and user_idx=a.id) as user_level FROM users a WHERE username ='" + param_username + "' and password ='" + md5(param_password) + "'";
+  // console.log(sql);
+  conn.query(sql, function (err, rows, fields) {
+    if (err) {
+      console.log('query is not excuted. select fail...\n' + err);
+      res.writeHead("200", { "Content-Type": "text/html;charset=utf-8" });
+      res.end("<h1>error. query is not excuted </h1>");
+      res.sendFile(STATIC_PATH + '/ulogin.html')
+    }
+    else {
+      //res.render('list.ejs', {list : rows});
+      //console.log( 'select ok - ' + sql);
+      //for(var i=0; i<rows.length; i++){ console.log(i+':i / '+rows[i].username +'-'+ rows[i].CTP_address +'-'+ rows[i].id +'-'+ rows[i].nick); }
+      if (rows.length > 0) {
+        user_id = rows[0].id;
+        user_name = rows[0].username;
+        user_nick = rows[0].nick;
+        user_avata = rows[0].avata;
+        user_level = rows[0].user_level;
+        user_CTP = rows[0].CTP;
+        user_CTP = parseFloat(user_CTP).toFixed(2);
+        user_POT = rows[0].POT; // 2020-01-04 DB change
+        user_CTP_address = rows[0].CTP_address;
+        console.log('유저CTP:' + user_CTP);
+        // console.log('유저레벨:'+user_level);
+        user_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
+
+        req.session.user_id = user_id; // 2020-01-02 session 
+        req.session.user_name = user_name; // 2020-01-02 session 
+        req.session.user_nick = user_nick; // 2020-01-02 session 
+        req.session.user_avata = user_avata; // 2020-01-02 session 
+        req.session.user_level = user_level; // 2020-01-02 session 
+        req.session.user_CTP = user_CTP; // 2020-01-02 session 
+        req.session.user_CTP_address = user_CTP_address; // 2020-01-02 session 
+        req.session.user_POT = user_POT; // 2020-01-02 session 
+
+        //   intervalLvUpFunc();
+        var sql2 = " ";
+        sql2 = sql2 + " INSERT INTO `tbl_game`(`game_idx`, `user_idx`, `user_coin`, `coin_address`, `yyyymmdd`, `ip`) ";
+        sql2 = sql2 + " VALUES (3,?,'CTP',?,CURDATE()+0,?) ";
+        sql2 = sql2 + " ON DUPLICATE KEY UPDATE minuteCnt = minuteCnt + 1, last_time=now() "; //무조건 +1 되는 버그로 Merge 문 X 
+        var params = [rows[0].id, rows[0].CTP_address, user_ip];
+        conn.query(sql2, params, function (err, rows2, fields2) {
+          if (err) {
+            console.log(err);
+            //conn.release();
+          } else {
+            console.log('merge success !!!!');
+            // console.log(rows2);
+            //conn.release();
+          }
+        });
+        // login 성공
+        // res.writeHead("200", {"Content-Type":"text/html;charset=utf-8"});
+        // res.end(indexPage(user_id,user_nick,user_avata,user_level)); 
+        //세션 스토어가 이루어진 후 redirect를 해야함.  // 2020-01-02 session 
+        req.session.save(function () {
+          // session saved
+          // console.log('session.save err :' + err);
+        });
+
+        if (req.cookies.pre_sid == "" || req.cookies.pre_sid === undefined) {
+          res.writeHead("200", { "Content-Type": "text/html;charset=utf-8" });
+          res.end("<html lang='en'><head><title>temp</title></head><body onload='document.frm.submit();'><form id='frm' name='frm' method='post' action='/'><input type='hidden' name='loginok' id='loginok' value='loginok'></form></body></html>");
+          // res.end("<script>document.location.href='/';</script>");
+          // res.render('pages/login', get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT));
+        } else {
+          let sid = req.cookies.pre_sid;
+          console.log('################ index.js cookies sid : '+sid+' ################');
+          res.cookie('pre_sid', ""); // diff url 
+          res.redirect('/session/' + sid); //최초 링크대로 전달 bug fix
         }
+
+      } else {
+        res.writeHead("200", { "Content-Type": "text/html;charset=utf-8" });
+        res.end("<script>alert('password maybe wrong');document.location.href='/';</script>");
+        //   res.sendFile(STATIC_PATH + '/ulogin.html')
       }
-    });
-  })
+    }
+  });
+})
 
 
 ////#endregion  ######### 2021-01-01 mod user login end #########
