@@ -165,7 +165,7 @@ router.route('/').post(asyncErrorHandler(async (req, res) => {
 }));
 
 router.route('/:id').get(asyncErrorHandler((req, res) => {
-    let sid = req.params.id;
+    var sid = req.params.id;
     // console.log('session.js sid : '+sid);
     // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
     
