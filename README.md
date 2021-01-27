@@ -300,3 +300,6 @@ CREATE TABLE `board` (
 cd server
 npm install sync-mysql
 
+2021-01-28
+docker Failed opening the RDB file dump.rdb (in server root dir /etc) for saving: Permission denied
+docker run --rm -d --name redis -p 6379:6379 -u 1007 -v /tmp:/data redis
