@@ -170,21 +170,21 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
     // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
     
     if (req.session.user_id=="" || req.session.user_id === undefined ){
-        res.cookie('pre_sid', sid, { maxAge: 60000   /*60 000밀리초 → 60초 → login 1Minute*/ });        
+        // res.cookie('pre_sid', sid, { maxAge: 60000   /*60 000밀리초 → 60초 → login 1Minute*/ });        
         res.sendFile(STATIC_PATH + '/ulogin.html');
         return;
     }
-    //shared link로 들어왔다면 로그인 후 최초 링크 주소로 보내기 위하여 2021-01-19
-    else {
-        if(req.cookies.pre_sid=="" || req.cookies.pre_sid===undefined){
-        }else{
-            sid = req.cookies.pre_sid;
-            // console.log('################ cookies sid : '+sid+' ################');
-            res.cookie('pre_sid', ""); // diff url 
-            // res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
-            res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
-        }
-    }
+    // //shared link로 들어왔다면 로그인 후 최초 링크 주소로 보내기 위하여 2021-01-19
+    // else {
+    //     if(req.cookies.pre_sid=="" || req.cookies.pre_sid===undefined){
+    //     }else{
+    //         sid = req.cookies.pre_sid;
+    //         // console.log('################ cookies sid : '+sid+' ################');
+    //         res.cookie('pre_sid', ""); // diff url 
+    //         // res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
+    //         res.redirect('/session/'+sid); //최초 링크대로 전달 bug fix
+    //     }
+    // }
 
     const s = sessionManagers.get(sid);
     // console.log('session.js 파라미터 >> sid : '+sid);
@@ -889,8 +889,25 @@ async function handleOnAuth(s, socket) {
         socket.join(`guest`);
     }
 
+    // var _roomNameArr = socket.id.replace('/','').split('#');
+    // let _roomName = _roomNameArr[0];
+
+    //pid aueRGVc-U socket ID /T19#1eo630CR3FLa73gcAAAB disconnect reason transport close
     socket.on('disconnect', (reason) => {
         console.log('pid', playerId, 'socket ID', socket.id, 'disconnect reason', reason);
+        // //#region ############# hit-1 start #############
+        // var conn = db_config.init(); //2020-09-13
+        // db_config.connect(conn);
+        // var sql3 = "";  // sql3 -- board list 
+        // sql3 = sql3 + "update board set hit=hit-1 where name=?";
+        // var params = [_roomName];
+        // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+_roomName+' ok ');}});
+        // // await sleep(100);
+        // sql3 = "";  // sql3 -- board list 
+        // sql3 = sql3 + "delete from board where hit=0";
+        // var params = [];
+        // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+' ok ');}});
+        // //#endregion ############# hit-1 end #############
         io.emit('player-disconnect', {
             playerName: s.getPlayerById(playerId),
         });
@@ -898,6 +915,16 @@ async function handleOnAuth(s, socket) {
     });
     //외부 링크로 들어오면 여기를 통과 함 2021-01-03
     console.log('a user connected at', socket.id, 'with player ID', playerId);
+    // //#region ############# hit-1 start #############
+    // var conn = db_config.init(); //2020-09-13
+    // db_config.connect(conn);
+
+    // var sql3 = "";  // sql3 -- board list 
+    // sql3 = sql3 + "update board set hit=hit+1 where name=?";
+    // var params = [_roomName];
+    // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+_roomName+' ok ');}});
+    // // await sleep(100);
+    // //#endregion ############# hit-1 end #############
 
     const chatSchema = Joi.object({
         message: Joi.string().trim().min(1).external(xss).required()
