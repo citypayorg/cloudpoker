@@ -92,6 +92,7 @@ const validateTableName = (val) => {
 // var Gsession;
 // Information host submits for game (name, stack, bb, sb)
 router.route('/').post(asyncErrorHandler(async (req, res) => {
+    console.log('##### 95 ##### session.js / 로 접근 ');
     //scheme to ensure valid username
     const schema = Joi.object({
         // username: Joi.string().alphanum().min(2).max(10)
@@ -169,7 +170,7 @@ router.route('/').post(asyncErrorHandler(async (req, res) => {
 router.route('/:id').get(asyncErrorHandler((req, res) => {
     var sid = req.params.id;
     // console.log('session.js sid : '+sid);
-    // console.log('session.js 파라미터 >> session.user_id : '+req.session.user_id);
+    console.log('##### 172 ##### session.js /id 로 접근 ');
 
     // if (req.session.user_id == "" || req.session.user_id === undefined) {
     if (req.cookies.user_idx == "" || req.cookies.user_idx === undefined) {

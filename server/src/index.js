@@ -250,13 +250,14 @@ app.post('/ulogin', function (req, res) {
         // });
 
         if (req.cookies.pre_sid == "" || req.cookies.pre_sid === undefined) {
+          console.log('################ index.js 253 빈폼 날리기  ################');
           res.writeHead("200", { "Content-Type": "text/html;charset=utf-8" });
           res.end("<html lang='en'><head><title>temp</title></head><body onload='document.frm.submit();'><form id='frm' name='frm' method='post' action='/'><input type='hidden' name='user_idx' id='user_idx' value='"+user_idx+"'><input type='hidden' name='loginok' id='loginok' value='loginok'></form></body></html>");
           // res.end("<script>document.location.href='/';</script>");
           // res.render('pages/login', get_user_info_json(user_id,user_name,user_nick,user_avata,user_level,user_CTP,user_CTP_address,user_POT));
         } else {
           let sid = req.cookies.pre_sid;
-          console.log('################ index.js cookies sid : '+sid+' ################');
+          console.log('################ index.js 260  /sessionn 뒤 존재 cookies sid : '+sid+' ################');
           res.cookie('pre_sid', ""); // diff url 
           res.redirect('/session/' + sid); //최초 링크대로 전달 bug fix
         }
