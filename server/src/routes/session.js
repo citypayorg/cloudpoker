@@ -203,6 +203,7 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 
     // let user_id = req.session.user_id;
     let user_idx = req.cookies.user_idx;
+    console.log('######### session.js 206 get_user_info_json2 ######### '+user_idx+' #########');
     res.render('pages/game', get_user_info_json2(user_idx,sid,token)); 
     // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
     // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");

@@ -116,7 +116,7 @@ app.get('/', function (req, res) {
   }
   else {
     // res.render('pages/login', get_user_info_json(user_id));
-    console.log('index.js 119 get_user_info_json '+req.cookies.user_idx);
+    console.log('######### index.js 119 get_user_info_json ######### '+req.cookies.user_idx+' #########');
     res.render('pages/login', get_user_info_json(req.cookies.user_idx));
   }
 });
@@ -163,7 +163,7 @@ function get_user_info_json(user_idx) {
   render_json.user_CTP = user_CTP;
   render_json.user_CTP_address = user_CTP_address;
   render_json.user_POT = user_POT;
-  console.log('177 #########'+render_json);
+  // console.log('166 #########'+render_json);
   return render_json;
 }
 // #############################################
@@ -235,7 +235,7 @@ app.post('/ulogin', function (req, res) {
             console.log(err);
             //conn.release();
           } else {
-            console.log('merge success !!!!');
+            console.log('tbl_game log merge success !!!!');
             // console.log(rows2);
             //conn.release();
           }
