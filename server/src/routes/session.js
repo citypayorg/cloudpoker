@@ -167,6 +167,7 @@ router.route('/').post(asyncErrorHandler(async (req, res) => {
     console.log(`starting new table with id: ${value.tableName} with mod player id ${playerId}`);
 }));
 
+var c_user_idx,c_playerId, c_socketId;// 2020-02-06
 router.route('/:id').get(asyncErrorHandler((req, res) => {
     var sid = req.params.id;
     // console.log('session.js sid : '+sid);
@@ -204,122 +205,17 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 
     // let user_id = req.session.user_id;
     let user_idx = req.cookies.user_idx;
-    res.cookie('user_idx', user_idx); // 2020-01-27
+    res.cookie('c_user_idx', user_idx); // 2020-01-27
     res.cookie('c_playerId', playerId); // 2020-02-06
-    console.log('######### session.js 209 get_user_info_json2 ######### '+user_idx+' / playerId : '+playerId+'#########');
+    c_user_idx = user_idx;
+    c_playerId = playerId; // 2020-02-06
+    // res.cookie('c_socketId', getSocketId(playerId)); // 2020-02-06
+    console.log('######### session.js 209 get_user_info_json2 ######### '+user_idx+' / playerId : '+playerId+' / c_socketId : '+c_socketId+' #########');
+    // console.log('######### session.js 209 get_user_info_json2 ######### '+user_idx+' / playerId : '+playerId+' #########');
     res.render('pages/game', get_user_info_json2(user_idx,sid,token)); 
-
-    // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
-    // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");
-    // let _user_POT = await fn_selectDataById(user_id);
-    // var _user_POT = getUserPot(user_id);
-    //#region  #################################
-    // var _user_pot = "";
-    // getUserPot(user_id,res);
-    // var conn = db_config.init();
-    // db_config.connect(conn);
-    // var sql = "SELECT * FROM users WHERE id='" + user_idx + "'";
-    // conn.query(sql, function (err, rows, fields) {
-    //     if (err) {
-    //         // console.log('query is not excuted. select fail...\n' + err);
-    //         // res.render('pages/game',
-    //         //     // get_user_info_json(user_id,sid,token)  //,Gsession
-    //         //     {
-    //         //         sid: sid
-    //         //         , token: token
-    //         //         //2021-01-03 add 
-    //         //         , user_id: req.session.user_id
-    //         //         , user_name: req.session.user_name
-    //         //         , user_nick: req.session.user_nick
-    //         //         , user_avata: req.session.user_avata
-    //         //         , user_level: req.session.user_level
-    //         //         , user_CTP: req.session.user_CTP
-    //         //         , user_CTP_address: req.session.user_CTP_address
-    //         //         , user_POT: req.session.POT
-    //         //         // ,user_POT:_user_POT
-    //         //         // ,Gsession:req.session //req.session //2021-01-18
-    //         //     }
-    //         // );
-    //     }
-    //     else {
-    //         if (rows.length > 0) {
-    //             // res.cookie('POT', rows[0].POT, { maxAge: 10000   /*10 000밀리초 → 10초 → 10s*/ });
-    //             // req.session.user_POT = rows[0].POT;
-    //             // console.log(sql +" :sql // rows[0].POT : " + rows[0].POT);
-    //             // req.session.save();
-    //             res.render('pages/game',
-    //                 // get_user_info_json(user_id,sid,token)  //,Gsession
-    //                 {
-    //                     sid: sid
-    //                     , token: token
-    //                     //2021-01-03 add 
-    //                     , user_id: req.session.user_id
-    //                     , user_name: req.session.user_name
-    //                     , user_nick: req.session.user_nick
-    //                     , user_avata: req.session.user_avata
-    //                     , user_level: req.session.user_level
-    //                     , user_CTP: req.session.user_CTP
-    //                     , user_CTP_address: req.session.user_CTP_address
-    //                     , user_POT: rows[0].POT
-    //                     // ,user_POT:_user_POT
-    //                     // ,Gsession:req.session //req.session //2021-01-18
-    //                 }
-    //             );
-    //         }
-    //     }
-    // });
-
-    // console.log("######################## req.session.user_POT : "+req.session.user_POT +" ######################## 193");
-    //#endregion  #################################
-
-    // res.render('pages/game', 
-    //     // get_user_info_json(user_id,sid,token)  //,Gsession
-    //     {sid: sid
-    //     ,token: token
-    //     //2021-01-03 add 
-    //     ,user_id:req.session.user_id
-    //     ,user_name:req.session.user_name
-    //     ,user_nick:req.session.user_nick
-    //     ,user_avata:req.session.user_avata
-    //     ,user_level:req.session.user_level
-    //     ,user_CTP:req.session.user_CTP
-    //     ,user_CTP_address:req.session.user_CTP_address
-    //     ,user_POT:_user_pot
-    //     // ,user_POT:_user_POT
-    //     // ,Gsession:req.session //req.session //2021-01-18
-    //     }
-    // );
 }));
 
 function get_user_info_json2(user_idx,sid,token) {
-    // var user_id = ""; // user idx
-    // var user_name = ""; // user email
-    // var user_nick = ""; // user 닉네임
-    // var user_avata = ""; // user 아바타 Default N
-    // var user_level = 0; // 접속한 후 _levelUpTime 분당 + 1
-    // var user_CTP = "0"; // CTP valance
-    // var user_CTP_address = ""; // CTP 입금 주소
-    // var user_POT = "0"; // CTP * 100
-  
-    // var conn = db_config.init();//2020-09-13
-    // db_config.connect(conn);
-    // var sql = "SELECT * FROM users WHERE id='" + user_idx + "'";
-    // conn.query(sql, function (err, rows, fields) {
-    //   if (err) { console.log('query is not excuted. select fail...\n' + err); }
-    //   else {
-    //     if (rows.length > 0) {
-    //       user_id = rows[0].id;
-    //       user_name = rows[0].username;
-    //       user_nick = rows[0].nick;
-    //       user_avata = rows[0].avata;
-    //       user_level = rows[0].user_level;
-    //       user_CTP = rows[0].CTP;
-    //       user_CTP = parseFloat(user_CTP).toFixed(2);
-    //       user_POT = rows[0].POT; // 2020-01-04 DB change
-    //       user_CTP_address = rows[0].CTP_address;
-    //     }
-    //   }
-    // });
     let sync_connection = new sync_mysql(db_config.constr());
     let result = sync_connection.query("SELECT * FROM users WHERE id='" + user_idx + "'");
     let user_id = result[0].id;
@@ -857,17 +753,20 @@ class SessionManager extends TableManager {
             // handle losers
             let losers = super.getLosers();
             for (let i = 0; i < losers.length; i++) {
-                console.log('#### /server/src/routes/session.js 858 [check_round-losers] - ' + losers[i].playerName + ' /chips:' + losers[i].chips + ' /playerId:' + losers[i].playerId);
+                console.log('#### /server/src/routes/session.js 780 [check_round-losers] - ' + losers[i].playerName + ' /chips:' + losers[i].chips + '  ');
                 await this.handlePlayerExit(losers[i].playerName);
-                if (losers[i].chips==0){ // 
-                    // this.io.to(this.getSocketId(p.playerName)).emit('sv_refresh', { 'playerName': `Player name ${playerName} is already taken.` });
-                    this.io.to(this.getSocketId(losers[i].playerId)).emit('sv_refresh', {});
-                    console.log('########### sv_refresh ########### 863 ########### getSocketId : '+this.getSocketId(losers[i].playerId) );
-                    await sleep(100);
-                    // if (req.cookies.user_idx == losers[i].playerName){
-                    //     res.redirect('/list/1');
-                    // }
-                }                
+                if ( losers[i].chips==0) {
+                    console.log('#c_user_idx:'+c_user_idx + '///'+losers[i].playerName);
+                    if ('U'+c_user_idx == losers[i].playerName){ // c_user_idx c_playerId, c_socketId
+                        // this.io.to(this.getSocketId(p.playerName)).emit('sv_refresh', { 'playerName': `Player name ${playerName} is already taken.` });
+                        this.io.to(c_socketId).emit('sv_refresh', {});
+                        console.log('########### sv_refresh ########### 788 ########### c_socketId : '+c_socketId+' ' );
+                        await sleep(100);
+                        // if (req.cookies.user_idx == losers[i].playerName){
+                        //     res.redirect('/list/1');
+                        // }
+                    }
+                }
             }
             await sleep(800);
             // start new round
@@ -953,7 +852,8 @@ async function handleOnAuth(s, socket) {
     } else {
         socket.join(`guest`);
     }
-
+    c_socketId=s.getSocketId(c_playerId);//2021-02-06
+    console.log(s.getSocketId(c_playerId) + ' / SocketId session.js 876');//2021-02-06
     // var _roomNameArr = socket.id.replace('/','').split('#');
     // let _roomName = _roomNameArr[0];
 
