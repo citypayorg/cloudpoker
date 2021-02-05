@@ -200,6 +200,17 @@ socket.on('render-timer', (data) => {
     }
 });
 
+//2021-02-05
+socket.on('alert', function(data) {
+    alert(data.message);
+});
+
+socket.on('sv_refresh', function() {
+    alert('sv_refresh');
+    document.location.reload();
+});
+
+
 function outputMessage(s) {
     feedbackText = '';
     messageCache.push({text:s, em: false});

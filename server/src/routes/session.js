@@ -204,9 +204,11 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 
     // let user_id = req.session.user_id;
     let user_idx = req.cookies.user_idx;
-    console.log('######### session.js 206 get_user_info_json2 ######### '+user_idx+' #########');
     res.cookie('user_idx', user_idx); // 2020-01-27
+    res.cookie('c_playerId', playerId); // 2020-02-06
+    console.log('######### session.js 209 get_user_info_json2 ######### '+user_idx+' / playerId : '+playerId+'#########');
     res.render('pages/game', get_user_info_json2(user_idx,sid,token)); 
+
     // let _userPOT = await getUsrPot(user_id, function(_result){_preMsg = _result; });
     // const [rows, fields] = query_promise("SELECT * FROM users WHERE id='"+user_id+"' ");
     // let _user_POT = await fn_selectDataById(user_id);
@@ -821,19 +823,14 @@ class SessionManager extends TableManager {
             for (let winnerData of this.table.game.winners) {
                 // TODO: use multi (redis) and message-batch (gameLog.jsx) to make this somewhat atomic.
                 await this.addToGameLog('log-winner', winnerData);
-                // console.log('#### /server/src/routes/session.js 512 [check_round-winnerData] find winnerData - '+winnerData.playerName+' /amount:'+winnerData.amount+' /chips:'+winnerData.chips+' /seat:'+winnerData.seat);
+                // console.log('#### /server/src/routes/session.js 824 [check_round-winnerData] find winnerData - '+winnerData.playerName+' /amount:'+winnerData.amount+' /chips:'+winnerData.chips+' /seat:'+winnerData.seat);
                 //#region ################## MYSQL winner save ##################
                 winplayerName = winnerData.playerName;
                 var sql2 = " update users set POT=" + winnerData.chips + " where id=" + winnerData.playerName.replace('U', '') + " ";
                 var params = [];
                 conn.query(sql2, params, function (err, rows2, fields2) {
                     if (err) { console.log(err); }
-                    else {
-                        console.log(sql2 + ' ok ');
-                        // Gsession.user_POT = winnerData.chips;
-                        // Gsession.save();
-                        // console.log('session.user_POT save 1');
-                    }
+                    else { console.log('winner : ' + sql2 + ' ok '); }
                 });
                 await sleep(100);
                 //#endregion################## MYSQL winner save ##################
@@ -844,17 +841,12 @@ class SessionManager extends TableManager {
             for (let p of this.table.allPlayers) {
                 if (p === null) { continue; }
                 if (winplayerName != p.playerName) {
-                    // console.log('#### session.js 528 - loserplayerName : '+p.playerName+' /chips:'+p.chips+' /seat:'+p.seat);
+                    // console.log('#### session.js 842 - loserplayerName : '+p.playerName+' /chips:'+p.chips+' /seat:'+p.seat);
                     var sql2 = " update users set POT=" + p.chips + " where id=" + p.playerName.replace('U', '') + " ";
                     var params = [];
                     conn.query(sql2, params, function (err, rows2, fields2) {
                         if (err) { console.log(err); }
-                        else {
-                            console.log(sql2 + ' ok ');
-                            // Gsession.user_POT = p.chips;
-                            // Gsession.save();
-                            // console.log('session.user_POT save 2');
-                        }
+                        else { console.log('looser : ' + sql2 + ' ok ');}
                     });
                     await sleep(100);
                 }
@@ -865,8 +857,17 @@ class SessionManager extends TableManager {
             // handle losers
             let losers = super.getLosers();
             for (let i = 0; i < losers.length; i++) {
-                console.log('#### /server/src/routes/session.js 542 [check_round-losers] - ' + losers[i].playerName + ' /chips:' + losers[i].chips);
+                console.log('#### /server/src/routes/session.js 858 [check_round-losers] - ' + losers[i].playerName + ' /chips:' + losers[i].chips + ' /playerId:' + losers[i].playerId);
                 await this.handlePlayerExit(losers[i].playerName);
+                if (losers[i].chips==0){ // 
+                    // this.io.to(this.getSocketId(p.playerName)).emit('sv_refresh', { 'playerName': `Player name ${playerName} is already taken.` });
+                    this.io.to(this.getSocketId(losers[i].playerId)).emit('sv_refresh', {});
+                    console.log('########### sv_refresh ########### 863 ########### getSocketId : '+this.getSocketId(losers[i].playerId) );
+                    await sleep(100);
+                    // if (req.cookies.user_idx == losers[i].playerName){
+                    //     res.redirect('/list/1');
+                    // }
+                }                
             }
             await sleep(800);
             // start new round
@@ -979,6 +980,7 @@ async function handleOnAuth(s, socket) {
     });
     //외부 링크로 들어오면 여기를 통과 함 2021-01-03
     console.log('a user connected at', socket.id, 'with player ID', playerId);
+    //a user connected at /T19#hE9sYOLrhlqt5DIMAAAD with player ID Zi_YOKBfa9
     // //#region ############# hit-1 start #############
     // var conn = db_config.init(); //2020-09-13
     // db_config.connect(conn);
