@@ -307,3 +307,10 @@ docker run --rm -d --name redis -p 6379:6379 -u 1007 -v /tmp:/data redis
 
 chmod -Rf 775 /data
 cd 644 dump.rdb
+
+
+# redis vmware 로 변경 21.03.08 
+D:\WWW\cloudpoker\server\node_modules\redis\index.js
+        // cnx_options.host = options.host || '127.0.0.1';
+        cnx_options.host = options.host || '192.168.126.128';
+
