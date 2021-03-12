@@ -116,8 +116,12 @@ app.get('/', function (req, res) {
   }
   else {
     // res.render('pages/login', get_user_info_json(user_id));
-    console.log('######### index.js 119 get_user_info_json ######### '+req.cookies.user_idx+' #########');
-    res.render('pages/login', get_user_info_json(req.cookies.user_idx));
+    try{
+      console.log('######### index.js 119 get_user_info_json ######### '+req.cookies.user_idx+' #########');
+      res.render('pages/login', get_user_info_json(req.cookies.user_idx));
+    }catch(e){
+        // alert(e);
+    }
   }
 });
 
@@ -170,9 +174,12 @@ function get_user_info_json(user_idx) {
 
 app.post('/', function (req, res) {
   var param_user_idx = req.body.user_idx;
-  console.log('index.js 170 get_user_info_json '+param_user_idx);  
-  res.render('pages/login', get_user_info_json(param_user_idx));
-  // res.render('pages/login', get_user_info_json(param_user_idx));
+  try{
+    console.log('index.js 178 get_user_info_json '+param_user_idx);  
+    res.render('pages/login', get_user_info_json(param_user_idx));
+  }catch(e){
+      // alert(e);
+  }
 });
 
 
