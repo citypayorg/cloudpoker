@@ -217,15 +217,11 @@ router.route('/:id').get(asyncErrorHandler((req, res) => {
 
 function get_user_info_json2(user_idx,sid,token) {
     let sync_connection = new sync_mysql(db_config.constr());
-    let result = sync_connection.query("SELECT * FROM users WHERE id='" + user_idx + "'");
+    let result = sync_connection.query("SELECT a.id,a.name,email,role,status,avatar ,CAST((SELECT balance FROM accounts WHERE user_id=a.id) as DECIMAL(20)) as POT FROM users a WHERE a.id='" + user_idx + "'");
     let user_id = result[0].id;
     let user_name = result[0].username;
-    let user_nick = result[0].nick;
     let user_avata = result[0].avata;
-    let user_level = result[0].user_level;
-    let user_CTP = parseFloat(result[0].CTP).toFixed(2);
     let user_POT = result[0].POT; // 2020-01-04 DB change
-    let user_CTP_address = result[0].CTP_address;
 
     var render_json = new Object();
     render_json.title = "title";
@@ -233,106 +229,10 @@ function get_user_info_json2(user_idx,sid,token) {
     render_json.token = token    
     render_json.user_id = user_id;
     render_json.user_name = user_name;
-    render_json.user_nick = user_nick;
     render_json.user_avata = user_avata;
-    render_json.user_level = user_level;
-    render_json.user_CTP = user_CTP;
-    render_json.user_CTP_address = user_CTP_address;
     render_json.user_POT = user_POT;
     return render_json;
   }
-
-// function getUserPot(id,res){
-//     var _pot;
-//     var conn = db_config.init();
-//     db_config.connect(conn);
-//     var sql = "SELECT * FROM users WHERE id='"+id+"'";
-//     conn.query(sql, function (err, rows, fields) 
-//     {
-//         if(err){ console.log('query is not excuted. select fail...\n' + err);}
-//         else {
-//             if(rows.length>0){
-//                 res.cookie('POT', rows[0].POT, { maxAge: 10000   /*10 000밀리초 → 10초 → 10s*/ });
-//                 // req.session.user_POT = rows[0].POT;
-//                 console.log(sql +" :sql // rows[0].POT : " + rows[0].POT);
-//                 // req.session.save();
-//             }
-//         }
-//     });
-//     // console.log(sql +" :sql // _pot : " + _pot);
-//     // return _pot;
-// }
-
-// async function getUsrPot(_user_id, callback){
-//     var conn = db_config.init();
-//     db_config.connect(conn);
-//     var sql = "SELECT * FROM users WHERE id='"+_user_id+"' "; 
-//     let _user_POT=0;
-//     conn.query(sql, function(err, rows){
-//       if (err){ throw err;}
-//       if(rows.length>0){ _user_POT    = rows[0].POT;}
-//       console.log("################### getUsrPot : "+_user_POT+" ###################");
-//       return callback(_user_POT);
-//     });
-//   }
-
-
-// function query_promise(q_string){
-//     var conn = db_config.init();
-//     db_config.connect(conn);
-//     return new Promise((resolve, reject)=>{
-//         conn.query(q_string,(err, result)=>{
-//         if(err) return reject(err);
-//         resolve(result);
-//     });
-//  });
-// }
-
-// function get_user_info_json(user_id,sid,token) {  //,Gsession
-//     var user_name         = ""; // user email
-//     var user_nick         = ""; // user 닉네임
-//     var user_avata        = ""; // user 아바타 Default N
-//     var user_level        = 0; // 접속한 후 _levelUpTime 분당 + 1
-//     var user_CTP          = "0"; // CTP valance
-//     var user_CTP_address  = ""; // CTP 입금 주소
-//     var user_POT          = "0"; // CTP * 100
-//     var conn = db_config.init();//2020-09-13
-//     db_config.connect(conn);
-//     var sql = "SELECT * FROM users WHERE id='"+user_id+"'";
-//     conn.query(sql, function (err, rows, fields) 
-//     {
-//       if(err){ console.log('query is not excuted. select fail...\n' + err);}
-//       else {
-//         if(rows.length>0){
-//           user_id     = rows[0].id;
-//           user_name   = rows[0].username;
-//           user_nick   = rows[0].nick;
-//           user_avata  = rows[0].avata;
-//           user_level  = rows[0].user_level;
-//           user_CTP    = rows[0].CTP;
-//           user_CTP    = parseFloat(user_CTP).toFixed(2);
-//           user_POT    = rows[0].POT;
-//           user_CTP_address= rows[0].CTP_address;
-//         //   console.log(user_POT +" : user_POT session 219 ############## 3pages/game ############## ");
-//         }
-//       }
-//     });
-
-//     var render_json = new Object();
-//     render_json.sid         = sid;
-//     render_json.token       = token;
-//     render_json.user_id     = user_id;
-//     render_json.user_name   = user_name;
-//     render_json.user_nick   = user_nick;
-//     render_json.user_avata  = user_avata;
-//     render_json.user_level  = user_level;
-//     render_json.user_CTP    = user_CTP;
-//     render_json.user_CTP_address  = user_CTP_address;
-//     render_json.user_POT    = user_POT;
-//     // render_json.Gsession    = Gsession;
-//     console.log(" ##############"+ render_json.user_POT +" : render_json.user_POT session 235 ##############  ");
-//     return render_json;
-//   }
 
 // maps sid -> SessionManager
 // TODO: delete sid from sessionManagers when table finishes
@@ -471,20 +371,6 @@ class SessionManager extends TableManager {
             action: action,
             amount: ogBetAmount || betAmount,
         });
-        //#region 2017-01-17 ############################
-        // if(parseInt(ogBetAmount || betAmount)>0 || action=='check')
-        // {
-        //     var conn = db_config.init(); //2020-09-13
-        //     db_config.connect(conn);
-        //     var sql2 = " update users set POT=POT - "+parseInt(ogBetAmount || betAmount)+" where id="+playerName.replace('U','')+" ";
-        //     var params = [];
-        //     conn.query(sql2, params, function(err, rows2, fields2){
-        //         if(err){ console.log(err);} else { console.log(sql2+' ok ');}
-        //     });
-        //     await sleep(1000);
-        // }
-        // console.log('/server/src/routes/session.js 264: '+playerName+':'+ogBetAmount || betAmount);
-        //#endregion 2017-01-17 ############################
     }
 
     getPublicInfo() {
@@ -722,7 +608,7 @@ class SessionManager extends TableManager {
                 // console.log('#### /server/src/routes/session.js 824 [check_round-winnerData] find winnerData - '+winnerData.playerName+' /amount:'+winnerData.amount+' /chips:'+winnerData.chips+' /seat:'+winnerData.seat);
                 //#region ################## MYSQL winner save ##################
                 winplayerName = winnerData.playerName;
-                var sql2 = " update users set POT=" + winnerData.chips + " where id=" + winnerData.playerName.replace('U', '') + " ";
+                var sql2 = " update accounts set balance=" + winnerData.chips + " where id=" + winnerData.playerName.replace('U', '') + " ";
                 var params = [];
                 conn.query(sql2, params, function (err, rows2, fields2) {
                     if (err) { console.log(err); }
@@ -738,7 +624,7 @@ class SessionManager extends TableManager {
                 if (p === null) { continue; }
                 if (winplayerName != p.playerName) {
                     // console.log('#### session.js 842 - loserplayerName : '+p.playerName+' /chips:'+p.chips+' /seat:'+p.seat);
-                    var sql2 = " update users set POT=" + p.chips + " where id=" + p.playerName.replace('U', '') + " ";
+                    var sql2 = " update accounts set balance=" + p.chips + " where id=" + p.playerName.replace('U', '') + " ";
                     var params = [];
                     conn.query(sql2, params, function (err, rows2, fields2) {
                         if (err) { console.log(err); }
@@ -860,19 +746,6 @@ async function handleOnAuth(s, socket) {
     //pid aueRGVc-U socket ID /T19#1eo630CR3FLa73gcAAAB disconnect reason transport close
     socket.on('disconnect', (reason) => {
         console.log('pid', playerId, 'socket ID', socket.id, 'disconnect reason', reason);
-        // //#region ############# hit-1 start #############
-        // var conn = db_config.init(); //2020-09-13
-        // db_config.connect(conn);
-        // var sql3 = "";  // sql3 -- board list 
-        // sql3 = sql3 + "update board set hit=hit-1 where name=?";
-        // var params = [_roomName];
-        // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+_roomName+' ok ');}});
-        // // await sleep(100);
-        // sql3 = "";  // sql3 -- board list 
-        // sql3 = sql3 + "delete from board where hit=0";
-        // var params = [];
-        // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+' ok ');}});
-        // //#endregion ############# hit-1 end #############
         io.emit('player-disconnect', {
             playerName: s.getPlayerById(playerId),
         });
@@ -880,18 +753,6 @@ async function handleOnAuth(s, socket) {
     });
     //외부 링크로 들어오면 여기를 통과 함 2021-01-03
     console.log('a user connected at', socket.id, 'with player ID', playerId);
-    //a user connected at /T19#hE9sYOLrhlqt5DIMAAAD with player ID Zi_YOKBfa9
-    // //#region ############# hit-1 start #############
-    // var conn = db_config.init(); //2020-09-13
-    // db_config.connect(conn);
-
-    // var sql3 = "";  // sql3 -- board list 
-    // sql3 = sql3 + "update board set hit=hit+1 where name=?";
-    // var params = [_roomName];
-    // conn.query(sql3, params, function(err, rows2, fields2){if(err){ console.log(err);} else { console.log(sql3+_roomName+' ok ');}});
-    // // await sleep(100);
-    // //#endregion ############# hit-1 end #############
-
     const chatSchema = Joi.object({
         message: Joi.string().trim().min(1).external(xss).required()
     });

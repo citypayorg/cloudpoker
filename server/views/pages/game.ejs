@@ -8,11 +8,7 @@
         localStorage.setItem('token', '<%=token%>');
         let _user_id            =  '<%=user_id%>';
         let _user_name          =  '<%=user_name%>';
-        let _user_nick          =  '<%=user_nick%>';
         let _user_avata         =  '<%=user_avata%>';
-        let _user_level         =  '<%=user_level%>';
-        let _user_CTP           =  '<%=user_CTP%>';
-        let _user_CTP_address   =  '<%=user_CTP_address%>';
         var _user_POT           =  '<%=user_POT%>';
     </script>
 </head>
@@ -40,12 +36,6 @@
             <div id="below-table-root"></div>
         </div>
     </div>
-    <!-- <input type="text" id="txt_uid"             value="<%=user_id%>" style="width:80px;"/>
-    <input type="text" id="txt_isWinner"        value="" style="width:80px;"/>
-    <input type="text" id="txt_name"            value="<%=user_name%>" style="width:120px;"/>
-    chip:<input type="text" id="txt_chips"      value="0" style="width:80px;"/>
-    earn:<input type="text" id="txt_earnings"   value="0" style="width:80px;"/>
-    POT:<input type="text" id="txt_POT"         value="<%=user_POT%>"  style="width:80px;"/> -->
     <script>
         function jsfn_setCookie(cookieName, cookieValue, cookieExpire, cookiePath, cookieDomain, cookieSecure){
             var cookieText=escape(cookieName)+'='+escape(cookieValue);
@@ -83,19 +73,7 @@
                 // window.location.href = '/';
             }
         }
-        // window.onload = function () 
-        // {
-        //     setTimeout( jsfn_bind_user(), 2000);
-        // }
-        // function jsfn_bind_user(){
-        //     try{
-        //         document.getElementById("new-playerName").value = _user_id;
-        //         document.getElementById("new-stack").value = _user_POT;
-        //     }catch(e){
-        //         // alert(e);
-        //     }
-        //     // console.log('/server/views/pages/game.ejs : jsfn_bind_user()');
-        // }
+        
         function jsfn_reloadSec(itv){
             setTimeout('jsfn_reload()', itv);
         }

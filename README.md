@@ -1,3 +1,17 @@
+---------------------------
+docker exec -it dingrr redis-cli FLUSHALL
+cd ~/cloudpoker/client
+yarn build
+cd ~/cloudpoker/
+node ./server/src/index.js
+
+cd ~/cloudpoker/
+forever start -l webSvr.log --minUptime 5000 --spinSleepTime 2000 -aw ./server/src/index.js
+forever list
+forever stop 0
+forever start 0
+---------------------------
+
 # poker.citypay.org
 
 [poker.citypay.org](http://poker.citypay.org) is clone cloudpoker modify and used mysql.

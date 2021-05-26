@@ -2,17 +2,6 @@
 <html lang="en">
 
 <head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-124761032-2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
-        gtag('config', 'UA-124761032-2');
-    </script> -->
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel='shortcut icon' href='/client/src/img/CloudpokerLogo.png' type='image/png' />
@@ -24,15 +13,12 @@
 
 <body>
     <section class="header">
-        <h2>[<%=user_nick%>] welcome to ctp poker</h2>
+        <h2>[<%=user_name%>] welcome to ctp poker</h2>
     </section>
 
     <main>
         <p>set up your private game</p>
         <form id="login-form">
-            <!-- <input class="u-full-width" required name="username" id="username" type="text" required="" placeholder="username">
-            <input class="u-full-width" required name="password" id="password" type="password" required=""  placeholder="password"> -->
-
             <input class="u-full-width" required type="text" id="name" name="name" minlength="2" maxlength="9" placeholder="Name" value="U<%=user_id%>" readonly >
             <input class="u-full-width" type="number" id="stack" name="stack" placeholder="Starting Stack" value="<%=user_POT%>" readonly >
             <div class="row">
@@ -70,8 +56,8 @@
             _btn_makeGame.click();
         }else{
             _btn_makeGame.style.display="none";
-            alert('게임에 참가 하시려면 최소 100개 이상의 POT를 보유 하셔야 합니다.\n1 CTP = 100 POT로 교환 가능합니다.');
-            document.location.href="http://exc.citypay.org";
+            alert('게임에 참가 하시려면 최소 100개 이상의 POT를 보유 하셔야 합니다.\ncitypay.org 에서 GGB 를 구매 가능 합니다.');
+            document.location.href="https://citypay.org";
         }
     </script>
 </body>
